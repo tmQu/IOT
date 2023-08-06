@@ -1,12 +1,16 @@
 
 #include <SPI.h>
 #include <MFRC522.h>
-#include <WiFi.h>
+#include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
 //wifi
-const char* ssid = "Wokwi-GUEST";
-const char* password = "";
+const char ssid[] = "Minh Quan";
+const char password[] = "07072007";
+
+
+long waitCallBack = -1;
+
 
 
 #define RST_PIN 16  // Configurable, see typical pin layout above
@@ -17,17 +21,15 @@ const char* password = "";
 MFRC522 mfrc522(SS_PIN, RST_PIN);  // Create MFRC522 instance.
 
 byte defaultKey[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-
 //
 char passwordOpenDoor[34] = "211274072112738221127335";
 
 String tagID;
-int count = 0;
-int timeForCounting = 2000;
 
+int timeForCounting = 3000;
+long timeForRegister = 120000;
 
 struct PersonInformation {
-  uint8 OrdinalNumber;
   char id[9];
   char name[34];
   char role;
@@ -38,6 +40,7 @@ struct PersonInformation {
     role = inputRole;
   }
 };
+
 
 
 void writeToBlock(byte buffer[], byte block)
@@ -95,16 +98,12 @@ bool writeInformation(PersonInformation person) {
   writeToBlock(buffer, 1);
   writeToBlock(buffer + 16, 2);
 
-  //---------------------------------------------
-  // writing name to card
-  for (int i = 0; i < strlen(person.name); i++)
-      buffer[i] = (byte)person.name[i];
-  writeToBlock(buffer, 4);
-  writeToBlock(buffer + 16, 5);
 
 
+  //writing id to card
   for (int i = 0; i < strlen(person.id); i++)
     buffer[i] = (byte)person.id[i];
+
   writeToBlock(buffer, 6);
   mfrc522.PICC_HaltA(); // Halt PICC
   mfrc522.PCD_StopCrypto1();  // Stop encryption on PCD
@@ -167,56 +166,12 @@ int checkPasswordOpenDoor()
     if (buffer[i] != (byte) passwordOpenDoor[i])
       return -1;
   }
-
+  Serial.println((char)buffer[i]);
   if (buffer[i] == (byte)'M')
     return MASTER_CARD;
     
 
   return EMPLOYEE_CARD;
-}
-
-
-
-//MQTT Receiver
-PersonInformation parseMsg(char *msg, unsigned int length)
-{
-
-
-  return PersonInformation(id, name, role);
-}
-void callback(char* topic, byte* message, unsigned int length) {
-  Serial.println(topic);
-  if (strcmp(topic, "21127407/Register_NewCard")
-  {
-    //Parse msg
-    char msg = (char*)message;
-    char *id = strtok (msg + 2, "\",\"");
-    char *name = strtok(NULL, "\",\"");
-    char role = strtok(NULL, "\",\"")[0];
-
-    PersonInformation person(id, name, role);
-    long startWait = millis();
-    while(startWait - millis() > 5000)
-    {
-      if (WriteInformation(person) == true);
-      {
-        Serial.println("write successfully");
-      }
-      else
-      {
-        Serial.println("write unsuccessfully");
-      }
-  
-    }
-  }
-
-  }
-  String strMsg;
-
-  Serial.println(strMsg);
-
-  //***Code here to process the received package***
-
 }
 
 //***Set server***
@@ -226,8 +181,47 @@ int port = 1883;
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
+
+//MQTT Receiver
+
+void callback(char* topic, byte* message, unsigned int length) {
+  Serial.println(topic);
+  if (strcmp(topic, "21127407/Get_New_Card_Info") == 0)
+  {
+    //Parse msg
+    char *msg = (char*)message;
+    char *id = strtok (msg + 2, "\",\"");
+    char *name = strtok(NULL, "\",\"");
+    char role = strtok(NULL, "\",\"")[0];
+
+    PersonInformation person(id, name, role);
+    long startWait = millis();
+    bool statusWrite = false;
+    while(millis() - startWait <= 5000)
+    {
+      statusWrite = writeInformation(person);
+      if(statusWrite == true)
+        break;
+    }
+
+    if(statusWrite == true)
+    {
+      Serial.print("Write successfully");
+    }
+    else {
+      Serial.print("Write unsuccessfully, please delete the data and try again");
+    }
+    waitCallBack = millis();
+  }
+  //***Code here to process the received package***
+
+}
+
+
+
 void wifiConnect() {
   WiFi.begin(ssid, password);
+
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -238,13 +232,14 @@ void wifiConnect() {
 void mqttConnect() {
   while(!mqttClient.connected()) {
     Serial.println("Attemping MQTT connection...");
-    String clientId = "ESP32Client-";
+    String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
     Serial.print(clientId);
     if(mqttClient.connect(clientId.c_str())) {
       Serial.println("connected");
 
-      //***Subscribe all topic you need***
+    
+      mqttClient.subscribe("21127407/Get_New_Card_Info");
      
     }
     else {
@@ -262,8 +257,8 @@ void setup() {
   SPI.begin();                        // Init SPI bus
   mfrc522.PCD_Init();                 // Init MFRC522 card
                                       // put your setup code here, to run once:
-  mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
-
+  //mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
+  Serial.print("Connecting to WiFi");
   wifiConnect();
   mqttClient.setServer(mqttServer, port);
   mqttClient.setCallback(callback);
@@ -286,10 +281,36 @@ void loop() {
     return;
   }
 
-
+  // get uid
+  byte uid[10];
+  for (byte i = 0; i < 10; i++)
+  {
+    uid[i] = mfrc522.uid.uidByte[i];
+  }
   int card = checkPasswordOpenDoor();
+  if (card == MASTER_CARD)
+  {
+    Serial.println("Exit register mode");
+    mqttClient.publish("IOT_Smart_Door/Register_NewCard", "disablebutton");
+    waitCallBack = -1;
+  }
+  if (waitCallBack != -1)
+  {
+    if(millis() - waitCallBack <= timeForRegister)
+    {
+      return;
+    }
+    else
+    {
+      Serial.println("Timeout register");
+      mqttClient.publish("IOT_Smart_Door/Register_NewCard", "timeout");
+      waitCallBack = -1;
+    }
+  }
 
   // Invalid card
+  Serial.print("card");
+  Serial.println(card);
   if (card == -1)
     return;
 
@@ -297,6 +318,7 @@ void loop() {
   
   unsigned long startCounting = millis();
   while (millis() - startCounting <= timeForCounting) {
+
     if (!mfrc522.PICC_IsNewCardPresent()) {
       continue;
     }
@@ -304,38 +326,47 @@ void loop() {
     if (!mfrc522.PICC_ReadCardSerial()) {
       continue;
     }
-
+    
+    int count = 0;
     for (int i = 0; i < 10; i++)
       if (uid[i] != mfrc522.uid.uidByte[i]) {
         count = 0;
+        Serial.print(uid[i]);
+        Serial.print(" ");
+        Serial.print(mfrc522.uid.uidByte[i]);
+        Serial.println("return");
         return;
       }
     count++;
+    Serial.print("count in for ");
+    Serial.println(count);
     mfrc522.PICC_HaltA();  // Stop reading
     startCounting = millis();
   }
 
 
   Serial.println(count);
-  if (card == EMPLOYEE_CARD)
+  if (card == 20)
   {
     if (count == 1)
     {
-      mqttClient.publish("21127407/IOT_Smart_Door/CheckOpenDoor", buffer);
+      //mqttClient.publish("21127407/IOT_Smart_Door/CheckOpenDoor", buffer);
       return;
     }
     else if (count >= 3)
     {
-      mqttClient.publish("21127407/IOT_Smart_Door/Req_Enter", buffer);
+      //mqttClient.publish("IOT_Smart_Door/Req_Enter", buffer);
     }
   }
-  else if (card == MASTER_CARD)
+  else if (card == 0)
   {
     if (count == 1) // register a new card
     {
-      mqttClient.publish("21127407/IOT_Smart_Door/Register_NewCard");
+      Serial.println("Register new card");
+      waitCallBack = millis();
+      mqttClient.publish("IOT_Smart_Door/Register_NewCard", "register");
     }
-    else (count >= 2)
+    else if (count >= 2)
     {
       mqttClient.publish("21127407/IOT_Smart_Door/OpenDoor", "True");
     }

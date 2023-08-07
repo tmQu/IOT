@@ -136,7 +136,8 @@ int checkPasswordOpenDoor()
   if (status != MFRC522::STATUS_OK) {
     Serial.print(F("Reading failed: "));
     Serial.println(mfrc522.GetStatusCodeName(status));
-  
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
     return -1;
   }
 
@@ -153,7 +154,8 @@ int checkPasswordOpenDoor()
   if (status != MFRC522::STATUS_OK) {
     Serial.print(F("Reading failed: "));
     Serial.println(mfrc522.GetStatusCodeName(status));
-    
+    mfrc522.PICC_HaltA();
+    mfrc522.PCD_StopCrypto1();
     return -1;
   }
 
@@ -257,7 +259,7 @@ void setup() {
   SPI.begin();                        // Init SPI bus
   mfrc522.PCD_Init();                 // Init MFRC522 card
                                       // put your setup code here, to run once:
-  //mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
+  mfrc522.PCD_DumpVersionToSerial();  // Show details of PCD - MFRC522 Card Reader details
   Serial.print("Connecting to WiFi");
   wifiConnect();
   mqttClient.setServer(mqttServer, port);
@@ -315,7 +317,7 @@ void loop() {
     return;
 
   //mfrc522.PICC_HaltA();  // Stop reading
-  
+  int count = 0;
   unsigned long startCounting = millis();
   while (millis() - startCounting <= timeForCounting) {
 
@@ -327,7 +329,7 @@ void loop() {
       continue;
     }
     
-    int count = 0;
+
     for (int i = 0; i < 10; i++)
       if (uid[i] != mfrc522.uid.uidByte[i]) {
         count = 0;

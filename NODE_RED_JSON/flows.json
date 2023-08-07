@@ -1,0 +1,568 @@
+[
+    {
+        "id": "bcd029bb2fd55e96",
+        "type": "tab",
+        "label": "Register",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "dcb06e92ab53484f",
+        "type": "ui_text_input",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "label": "id",
+        "tooltip": "",
+        "group": "f9c40dfb452af412",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "id",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "str",
+        "x": 290,
+        "y": 140,
+        "wires": [
+            [
+                "df5bf6a5d225b2c1"
+            ]
+        ]
+    },
+    {
+        "id": "8a68b5aa93ed3642",
+        "type": "ui_text_input",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "label": "name",
+        "tooltip": "",
+        "group": "f9c40dfb452af412",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "name",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "str",
+        "x": 290,
+        "y": 200,
+        "wires": [
+            [
+                "11376ebb65e7be6e"
+            ]
+        ]
+    },
+    {
+        "id": "c5ecbf2223b95974",
+        "type": "ui_dropdown",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "label": "role",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "f9c40dfb452af412",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "master",
+                "value": "M",
+                "type": "str"
+            },
+            {
+                "label": "employee",
+                "value": "E",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "role",
+        "topicType": "str",
+        "className": "",
+        "x": 290,
+        "y": 280,
+        "wires": [
+            [
+                "93334d9b48d41b56"
+            ]
+        ]
+    },
+    {
+        "id": "f11fc7385b91d72a",
+        "type": "ui_button",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "group": "f9c40dfb452af412",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "button",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "{{msg.background}}",
+        "className": "",
+        "icon": "",
+        "payload": "1",
+        "payloadType": "num",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 610,
+        "y": 360,
+        "wires": [
+            [
+                "435241551983f170"
+            ]
+        ]
+    },
+    {
+        "id": "4c4c0c85bddf39fb",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "get personInfor from flow",
+        "func": "var data = flow.get('personInfor')\nvar values = 'VALUES(\\'' +data[0] + '\\',\\'' + data[1] + '\\',\\'' + data[2] + '\\')'\nvar query = `INSERT INTO employee (id, name, role) ` + values \nmsg.topic = query\nreturn msg",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1130,
+        "y": 240,
+        "wires": [
+            [
+                "e9758a47371b79f7"
+            ]
+        ]
+    },
+    {
+        "id": "248ea0b3350d88d3",
+        "type": "mqtt out",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "topic": "21127407/Get_New_Card_Info",
+        "qos": "2",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "0613d1a52be909e0",
+        "x": 1950,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "2592cd50f27e3adf",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "Enable/Disable button",
+        "func": "\nif (msg.payload == \"register\")\n{\n    msg.background = \"green\";\n    msg.enabled = true\n}\nelse{\n    msg.background = \"grey\"\n    msg.enabled = false\n}\nreturn msg\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 360,
+        "wires": [
+            [
+                "f11fc7385b91d72a"
+            ]
+        ]
+    },
+    {
+        "id": "3aa9ec6707f32480",
+        "type": "mqtt in",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "topic": "IOT_Smart_Door/Register_NewCard",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "0613d1a52be909e0",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 360,
+        "wires": [
+            [
+                "2592cd50f27e3adf"
+            ]
+        ]
+    },
+    {
+        "id": "435241551983f170",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "check input values",
+        "func": "var id = flow.get('id') || ''\nvar name = flow.get('name') || ''\nvar role = flow.get('role') || ''\n\nvar personInfor = [id, name, role]\nfor (var i = 0; i < 3; i++)\n{\n    if (personInfor[i].length == 0)\n    {\n        msg.payload = 0\n        return msg\n    }\n}\nflow.set('personInfor', personInfor)\nmsg.payload = 1\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 770,
+        "y": 360,
+        "wires": [
+            [
+                "0dc18b814924f3e5"
+            ]
+        ]
+    },
+    {
+        "id": "0dc18b814924f3e5",
+        "type": "switch",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 950,
+        "y": 360,
+        "wires": [
+            [
+                "4c4c0c85bddf39fb"
+            ],
+            [
+                "aca5546c597376f7"
+            ]
+        ]
+    },
+    {
+        "id": "e9758a47371b79f7",
+        "type": "mysql",
+        "z": "bcd029bb2fd55e96",
+        "mydb": "e40f3dd7850268b2",
+        "name": "INSERT REGISTER DATA",
+        "x": 1400,
+        "y": 240,
+        "wires": [
+            [
+                "0b19426b88e44605",
+                "b67be873fceebf90"
+            ]
+        ]
+    },
+    {
+        "id": "a34bfa8eae86b884",
+        "type": "catch",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "scope": [
+            "e9758a47371b79f7"
+        ],
+        "uncaught": false,
+        "x": 1070,
+        "y": 140,
+        "wires": [
+            [
+                "a7a9b6514eee1064"
+            ]
+        ]
+    },
+    {
+        "id": "fa099a47d75d5bca",
+        "type": "ui_toast",
+        "z": "bcd029bb2fd55e96",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "className": "",
+        "topic": "",
+        "name": "",
+        "x": 1450,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "a7a9b6514eee1064",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "catch errors",
+        "func": "msg.payload = msg.error.message\nmsg.topic = \"try again\"\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1250,
+        "y": 140,
+        "wires": [
+            [
+                "fa099a47d75d5bca"
+            ]
+        ]
+    },
+    {
+        "id": "d2396ba049d9260a",
+        "type": "comment",
+        "z": "bcd029bb2fd55e96",
+        "name": "catch erros",
+        "info": "Catch errors when insert values to database",
+        "x": 1080,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "e3781662c4f7729e",
+        "type": "ui_toast",
+        "z": "bcd029bb2fd55e96",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "className": "",
+        "topic": "",
+        "name": "",
+        "x": 1330,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "aca5546c597376f7",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "input notification",
+        "func": "msg.payload = \"Please input all the text box\"\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 440,
+        "wires": [
+            [
+                "e3781662c4f7729e"
+            ]
+        ]
+    },
+    {
+        "id": "df5bf6a5d225b2c1",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "push id to flow",
+        "func": "flow.set('id', msg.payload)\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "11376ebb65e7be6e",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "push name to flow",
+        "func": "flow.set('name', msg.payload)\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "93334d9b48d41b56",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "push role to flow",
+        "func": "flow.set('role', msg.payload)\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0b19426b88e44605",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "get personInfor from flow",
+        "func": "msg.payload = flow.get('personInfor')\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1670,
+        "y": 240,
+        "wires": [
+            [
+                "248ea0b3350d88d3"
+            ]
+        ]
+    },
+    {
+        "id": "3cca66f5dd10f768",
+        "type": "inject",
+        "z": "bcd029bb2fd55e96",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 250,
+        "y": 420,
+        "wires": [
+            [
+                "2592cd50f27e3adf"
+            ]
+        ]
+    },
+    {
+        "id": "121458b9efbb3762",
+        "type": "ui_toast",
+        "z": "bcd029bb2fd55e96",
+        "position": "top right",
+        "displayTime": "3",
+        "highlight": "",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "className": "",
+        "topic": "",
+        "name": "",
+        "x": 1890,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "b67be873fceebf90",
+        "type": "function",
+        "z": "bcd029bb2fd55e96",
+        "name": "successfully register",
+        "func": "msg.payload = \"successfully register\"\nmsg.topic = \"\"\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1680,
+        "y": 180,
+        "wires": [
+            [
+                "121458b9efbb3762"
+            ]
+        ]
+    },
+    {
+        "id": "f9c40dfb452af412",
+        "type": "ui_group",
+        "name": "register",
+        "tab": "335061a30a3ce467",
+        "order": 1,
+        "disp": false,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "0613d1a52be909e0",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "e40f3dd7850268b2",
+        "type": "MySQLdatabase",
+        "name": "",
+        "host": "127.0.0.1",
+        "port": "3306",
+        "db": "employee",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "335061a30a3ce467",
+        "type": "ui_tab",
+        "name": "Register",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]

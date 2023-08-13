@@ -22,22 +22,6 @@ void notMove(){
   digitalWrite(IN4, LOW);
 }
 
-/*void openAutomatic(int left, int right){
-  if(left == LOW || right == LOW){
-    prev_left = left;
-    prev_right = right;
-    notMove();
-  }
-  else{
-    if(prev_left == LOW && prev_right == HIGH){
-      spinRight();
-    }
-    else if(prev_left == HIGH && prev_right == LOW){
-      spinLeft();
-    }
-  }
-}*/
-
 int getButtonState(bool rightBut)
 {
   limitSwitch_right.loop();

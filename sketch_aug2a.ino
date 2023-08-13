@@ -1,29 +1,28 @@
 #include <ezButton.h>
-  // create ezButton object that attach to ESP32 pin GPIO17
-int IN1 = 5;
-int IN2 = 4;
-int prev_left;
-int prev_right;
-int closed_time = 0;
+#define PRESS LOW
+#define RELEASE HIGH
+ 
+int IN3 = 13;
+int IN4 = 15;
 ezButton limitSwitch_right(14);
 ezButton limitSwitch_left(12);
 
 void spinLeft() {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
 }
 
 void spinRight() {
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
 }
 
 void notMove(){
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
 }
 
-void openAutomatic(int left, int right){
+/*void openAutomatic(int left, int right){
   if(left == LOW || right == LOW){
     prev_left = left;
     prev_right = right;
@@ -37,33 +36,64 @@ void openAutomatic(int left, int right){
       spinLeft();
     }
   }
-  /*if(left == LOW){
-    prev_left = left;
-    prev_right = right;
-    notMove();
+}*/
+
+int getButtonState(bool rightBut)
+{
+  limitSwitch_right.loop();
+  int right = limitSwitch_right.getState();
+  limitSwitch_left.loop();
+  int left = limitSwitch_left.getState();
+  if (rightBut ==  true)
+    return right;
+  return left;
+}
+
+void openAutomatic(){
+  spinRight();
+  int right = getButtonState(true);
+  Serial.println(right);
+  delay(1000);
+  while(right == RELEASE){
+    right = getButtonState(true);
+    Serial.println("Right");
   }
-  else if(right == LOW){
-    prev_left = left;
-    prev_right = right;
-    notMove();
-    delay(3000);
-    //spinLeft();
+
+  notMove();
+  Serial.println("Stop 3s");
+  delay(3000);
+  Serial.println("After stop");
+
+  spinLeft();
+  int left = getButtonState(false);
+  Serial.println(left);
+  delay(1000);
+  while(left == RELEASE){
+    left = getButtonState(false);
+    Serial.println("Left");
   }
-  else{
-    if(prev_left == LOW && prev_right == HIGH){
-      spinRight();
-    }
-    else if(prev_left == HIGH && prev_right == LOW){
-      spinLeft();
-    }
-  }*/
+  notMove();
+}
+
+void openingDoor(){
+  spinRight();
+  int right = getButtonState(true);
+  while(right == RELEASE)
+    right = getButtonState(true);
+  notMove();
+}
+
+void closingDoor(){
+  spinLeft();
+  int left = getButtonState(false);
+  while(left == RELEASE)
+    left = getButtonState(false);
+  notMove();
 }
 
 void setup() {
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT); 
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT); 
   pinMode(2, INPUT);
   Serial.begin(9600);
   limitSwitch_right.setDebounceTime(50);
@@ -71,10 +101,15 @@ void setup() {
 }
 
 void loop() {
-  limitSwitch_right.loop(); // MUST call the loop() function first
-  limitSwitch_left.loop();
-  int right = limitSwitch_right.getState();
-  int left = limitSwitch_left.getState();
-  openAutomatic(left, right);
-  //spinLeft();
+  /*Serial.println("new loop");
+  delay(1000);
+  openAutomatic();
+  Serial.println("10s");
+  delay(10000);*/
+
+  //if open
+  openingDoor();
+  //if close
+  //closingDoor();
+  delay(5000);
 }
